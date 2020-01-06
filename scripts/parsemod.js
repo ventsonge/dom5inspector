@@ -187,7 +187,17 @@ var modctx = DMI.modctx = {
 	},
 	_new: function(cmd, args, tname, fnwarn) {
 		modctx._checkContextClosed(fnwarn);
-		if (!args.n1) throw 'missing argument (id expected)';
+		if (!args.n1) {
+			if (tname == 'wpn' || tname == 'armor') {
+				var newid = 2000;
+				while ((modctx[tname+'lookup'][newid])) {
+					newid++;
+				}
+				args.n1 = newid;
+			} else {
+				throw 'missing argument (id expected)';
+			}
+		}
 		if (modctx[tname+'lookup'][args.n1]) throw 'id already in use';
 
 		var o = modctx[tname] = { id: args.n1 };
@@ -266,7 +276,7 @@ var modctx = DMI.modctx = {
 			modctx._new(c,a ,'armor',fnw);
 			DMI.MArmor.initArmor(modctx.armor);
 
-			if (a.n1<250 || a.n1>999) throw 'invalid id';
+			//if (a.n1<250 || a.n1>999) throw 'invalid id';
 		},
 		selectarmor: function(c,a,t,fnw){
 			try {
@@ -285,7 +295,7 @@ var modctx = DMI.modctx = {
 			modctx._new(c,a ,'wpn',fnw);
 			DMI.MWpn.initWpn(modctx.wpn);
 
-			if (a.n1<700 || a.n1>1999) throw 'invalid id';
+			//if (a.n1<700 || a.n1>1999) throw 'invalid id';
 		},
 		selectweapon: function(c,a,t,fnw){
 			try {
@@ -672,6 +682,11 @@ var modctx = DMI.modctx = {
 
 			modctx.item[pstr] = a.n2;
 		},
+		
+		nationrebate: function(c,a,t){ modctx.item.nationrebate.push(argref(a)); }, //deferr lookups
+		itemcost1: _num,
+		itemcost2: _num,
+		champprize: _bool,
 
 	},
 
@@ -797,6 +812,8 @@ var modctx = DMI.modctx = {
 		charge:		_bool,
 		flail:		_bool,
 		nostr:		_bool,
+		bowstr:		_bool,
+		halfstr:	_bool,
 		mrnegates:	_bool,
 		mrnegateseasily:	_bool,
 		ironweapon:		_bool,
@@ -810,8 +827,8 @@ var modctx = DMI.modctx = {
 		natural: _bool,
 		internal: _bool,
 		ferrous: _bool,
-		flammable: _bool
-
+		flammable: _bool,
+		dt_realstun: _bool
 
 	},
 
@@ -864,7 +881,10 @@ var modctx = DMI.modctx = {
 		def:	_num,
 		rcost: 	_num,
 		prot: 	_num,
-		enc: 	_num
+		enc: 	_num,
+		magicarmor: _bool,
+		ironarmor: _bool,
+		woodenarmor: _bool,
 	},
 
 	//unit selected
@@ -1273,12 +1293,12 @@ var modctx = DMI.modctx = {
 
 		nametype:	_num,
 
-		noleader:	function(c,a,t){ modctx[t]['leader'] = 0; modctx[t]['baseleadership'] = 0; },
-		poorleader:	function(c,a,t){ modctx[t]['leader'] = 10; modctx[t]['baseleadership'] = 10;},
-		okleader:	function(c,a,t){ modctx[t]['leader'] = 40; modctx[t]['baseleadership'] = 40;},
-		goodleader:	function(c,a,t){ modctx[t]['leader'] = 80; modctx[t]['baseleadership'] = 80;},
-		expertleader:	function(c,a,t){ modctx[t]['leader'] = 120; modctx[t]['baseleadership'] = 120;},
-		superiorleader:	function(c,a,t){ modctx[t]['leader'] = 160; modctx[t]['baseleadership'] = 160;},
+		noleader:	function(c,a,t){ modctx[t]['leader'] = 0; },
+		poorleader:	function(c,a,t){ modctx[t]['leader'] = 10; },
+		okleader:	function(c,a,t){ modctx[t]['leader'] = 40; },
+		goodleader:	function(c,a,t){ modctx[t]['leader'] = 80; },
+		expertleader:	function(c,a,t){ modctx[t]['leader'] = 120; },
+		superiorleader:	function(c,a,t){ modctx[t]['leader'] = 160; },
 		command:		_num,
 
 		nomagicleader:		function(c,a,t){ modctx[t]['magicleader'] = 0; },
@@ -1464,7 +1484,28 @@ var modctx = DMI.modctx = {
 		monpresentrec: 	function(c,a,t){ modctx[t]['monpresentrec'] = argref(a) },
 
 		drake: _bool,
-        addupkeep: _num
+        addupkeep: _num,
+        
+        skirmisher: _num, 
+        dragonlord: _num,
+        unsurr: _num, 
+        commaster: _bool, 
+        carcasscollector: _num, 
+        spellsinger: _bool, 
+        curseluckshield: _num, 
+        combatcaster: _bool, 
+        reanimpriest: _bool,
+        beartattoo: _num, 
+        horsetattoo: _num, 
+        wolftattoo: _num, 
+        boartattoo: _num, 
+        snaketattoo: _num, 
+        swimming: _bool,
+        snowmove: _bool,
+        rpcost: _num,
+        spiritsight: _bool,
+        humanoid: _bool,
+        templetrainer: _num,
 	},
 
 	//spell selected
@@ -2062,7 +2103,21 @@ var modctx = DMI.modctx = {
 		req_hostileench : _num, //lookup
 		req_enchdom : _num, //lookup
 		req_targitem: _num, //lookup
-		req_gold : _num,
+		req_gold: _num,
+		req_mnr: _num,
+		req_notanycode: _num, 
+		req_2monsters: _num, 
+		req_domchance: _num, 
+		req_targmaxmorale: _num, 
+		req_targundead: _num, 
+		req_targdemon: _num, 
+		req_targinanimate: _num, 
+		req_targmagicbeing: _num, 
+		req_5monsters: _num,  
+		req_thronesite: _num,
+
+		xp: _num,
+		
 		killpop : _num,
 
 		// Effects
@@ -2185,6 +2240,7 @@ var modctx = DMI.modctx = {
 		purgedelayed  : _num,
 		transform: _str_num, //lookup
 		nationench: _num,
+		
 
 		id:	function(c,a,t){ modctx[t]['eff_id'] = argref(a); }
 	},

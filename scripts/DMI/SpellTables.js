@@ -16,6 +16,7 @@ var modctx = DMI.modctx;
 // each 1000 adds 1 per caster path (above base casting level)
 //examples:
 //  10     ->   10
+//  510    ->   10+ [1/2 lvl]
 //  1010   ->   10+
 //  3010   ->   10+++
 //  10010  ->   10+ [10/lvl]
@@ -24,13 +25,23 @@ function spellBonus(v, baselvl) {
 	v = parseInt(v || '0');
 	baselvl = parseInt(baselvl || '0');
 
+	var mod;
+	if (v > 99 && v < 999) {
+		mod = 500;
+	} else {
+		mod = 1000;
+	}
+	
 	//strip thousands
-	var vbase = v % 1000;
+	var vbase = v % mod;
+
 	//count thousands
-	var bonus = (v-vbase) / 1000;
+	var bonus = (v-vbase) / mod;
 
 	//baselvl is minimum caster lvl (add compulsory bonus to match ingame display)
-	vbase = vbase + (baselvl * bonus)
+	if (mod == 1000) {
+		vbase = vbase + (baselvl * bonus)
+	}
 
 	//support negative values
 	var chr = '+',  suf = '';
@@ -44,6 +55,10 @@ function spellBonus(v, baselvl) {
 	//10+++
 	else if (bonus > 0)
 		suf = (new Array( bonus + 1 ).join( chr ));
+	
+	if (mod == 500) {
+		suf = suf + "[1/2 lvl]";
+	}
 
 	return String(vbase) + suf;
 }
@@ -117,6 +132,8 @@ function list_summons(spell, effect) {
 	var arr;
 	if (effect.effect_number == "76") {
 		arr = MSpell.tartarianGate;
+	} else if (effect.effect_number == "81" && spell.damage == "43") {
+		arr = arr = MSpell.ghostShipArmada;
 	} else if (effect.effect_number == "89") {
 		arr = MSpell.uniqueSummon[effect.raw_argument];
 	} else if (effect.effect_number == "100") {
@@ -145,6 +162,7 @@ MSpell.yatas = [2632, 2633, 2634, 2636];
 MSpell.unleashImprisonedOnes = [2498, 2499, 2500];
 MSpell.angelichost = [465, 543];
 MSpell.hordefromhell = [304, 303];
+MSpell.ghostShipArmada = [3348, 3349, 3350, 3351, 3352];
 
 MSpell.uniqueSummon = {
 		1:	/* Bind Ice Devil */ [
@@ -182,7 +200,9 @@ MSpell.uniqueSummon = {
    	    17:	/* Balam */ [
    	        2765, 2768, 2771, 2774],
    	   	18:	/* Chaac */ [
-   	   	    2778, 2779, 2780, 2781]
+   	   	    2778, 2779, 2780, 2781],
+   	   	19:	/* Sanguine Heritage */ [
+	   	    1019, 1035, 3244, 3245, 3251, 3252, 3253, 3255]
 }
 
 MSpell.terrainSummon = {
@@ -311,6 +331,9 @@ MSpell.effectlookup = {
 		79:	damage_untested,
 		80:	damage_untested,
 		81:	function (spell, effect) {
+			if (effect.effect_number == "81" && spell.damage == "43") {
+				return list_summons(spell, effect);
+			}
 			if (modctx.enchantments_lookup[effect.raw_argument]) {
 				return modctx.enchantments_lookup[effect.raw_argument].name;
 			} else {
@@ -379,6 +402,9 @@ MSpell.effectlookup = {
 		},
 		137:	function(spell, effect) {
 			return show_summon(effect.raw_argument, spell.effects_count, spell.pathlevel1);
+		},
+		141:	function(spell, effect) {
+			return show_summon(effect.raw_argument, 2, spell.pathlevel1);
 		},
 		500:	damage_untested,
 		504:	damage_untested,

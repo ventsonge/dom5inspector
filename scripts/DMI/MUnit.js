@@ -34,6 +34,7 @@ MUnit.unitSortableTypes = {
 	'cmdr (swamp)': 		'aah.cmdr',
 	'cmdr (u-water)': 		'aai.cmdr-uw',
 	'cmdr (waste)': 		'aaj.cmdr',
+	'cmdr (plains)': 		'aak.cmdr',
 
 	'commander': 			'aba.cmdr',
 	'Commander': 			'abb.cmdr',
@@ -95,6 +96,7 @@ MUnit.unitSortableTypes = {
 	'unit (coast)': 		'afv.unit',
 	'unit (land)': 			'afw.unit',
 	'unit (u-water)': 		'afx.unit-uw',
+	'unit (plains)': 		'afy.unit',
 
 	'hero (multi)': 		'aga.hero-cmdr',
 	'hero (unique)': 		'agb.hero-cmdr',
@@ -250,7 +252,6 @@ MUnit.prepareData_PostMod = function() {
 		o.linkname = o.fullname = (o.name || '(undefined)');
 		if (o.fixedname) {
 			o.fullname = '“'+(o.fixedname) + '“ - '+o.name;
-			o.unique='1';
 		}
 
 		// horror
@@ -604,10 +605,10 @@ MUnit.autocalc = function (o) {
 		cost_array.sort(function(a,b){return b-a});
 
 		var cost;
-		if (o.type == 'u') {
-			cost = 0;
-		} else {
+		if (o.type == 'c') {
 			cost = cost_array[0] + cost_array[1]/2 + cost_array[2]/2 + cost_array[3]/2;
+		} else {
+			cost = 0;
 		}
 
 		// Special costs
@@ -1017,7 +1018,7 @@ MUnit.prepareForRender = function(o) {
 		}
 		if (n= parseInt(o.E)) {
 			if (isldr) bonus('earth magic', 'magicleader', n*5);
-			bonus('earth magic', 'prot', n);
+			if (n > 2) bonus('earth magic', 'prot', n);
 		}
 		if (n= parseInt(o.F)) {
 			if (isldr) bonus('fire magic', 'leader', n*5);
@@ -1725,7 +1726,7 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 	'sorceryrange',	'sorcery ritual range',
 	'allrange',	'ritual range',
 	'masterrit',	'ritual pathboost',
-	'disbel',	'disbelieve illusions',
+	'disbelieve',	'disbelieve illusions',
 
 	'supplybonus',	'supply bonus',		Format.Signed,
 	'siegebonus',	'siege bonus',		Format.Signed,
@@ -1744,7 +1745,8 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 	'kokytosret', 	'kokytos returning',	Format.Percent,
 	'infernoret', 'inferno returning', Format.Percent,
 	'lamiabonus', 'lamia bonus',
-
+	'formationfighter',	'formation fighter',
+    'minsizeleader', 'Min commander size',
 	'seduce',	'seduction',	function(v){ if (v=='0') return '0'; return 'morale vs '+v; },
 	'succubus',	'dream seduction',	function(v){ if (v=='0') return '0'; return 'morale vs '+v; },
 	'corrupt',	'capture cmdr (corruption)',	function(v){ if (v=='0') return '0'; return 'morale vs '+v; },
@@ -1782,6 +1784,7 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 	'explodeondeath',	'explode on death',
 	'transformation', 'transformation', {'-1': 'bad result', '0': 'disabled', '1': 'good result' },
 	'guardspiritbonus', 'guardian spirit',
+	'ironvul', 'iron vulnerabilty',
 	'startitem',	'starts with',	function(v,o){
 		return Utils.itemRef(v);
 	},
@@ -1933,14 +1936,13 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 	'disres', 'disease resistant',
 	'sendlesserhorrormult', 'send lesser horror multiplier',
 	'theftofthesunawe', 'theft of the sun awe',
-	'dragonmastery', 'dragonmastery',
+	'dragonlord', 'dragonlord',
 	'curseattacker', 'curse attacker',
 	'uwheataura', 'uw heat aura',
 	'slothresearch', 'sloth research',
 //	'horrorsonly', 'horrors only',
 	'mindvessel', 'mindvessel',
 	'startagemodifier', 'startagemodifier',
-	'disbelieveillusions', 'disbelieve',
 	'landreinvigoration', 'land reinvigoration',
 	'beartattoo', 'magic bear tattoo',
 	'horsetattoo', 'magic horse tattoo',
@@ -1952,9 +1954,9 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 	'supplysize', 'supply size',
 	'astralfetters', 'astral fetters',
 	'foreignmagicboost', 'foreign magic boost',
-	'templesummon', 'temple summon', Utils.unitRef,
+	'templetrainer', 'temple summon', Utils.unitRef,
 	'infernalcrossbreedingmult', 'crossbreeding multiplier',
-	'unsurroundable', 'unsurroundable',
+	'unsurr', 'unsurroundable',
 	'speciallook', 'speciallook',
 	'swarmbody', 'swarm body',
 	'onisummoner', 'oni summoner',
@@ -1973,12 +1975,14 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 	'forgebonus', 'forge bonus', Format.Percent,
 	'indepmove', 'independant move',
 	'vineshield', 'vine shield',
-	'alchemyBonus', 'alchemyBonus',
+	'alchemy', 'alchemy',
 	'afflictionresistance', 'affliction resistance',
 	'makesarmylooksmallerorlarger', 'army size',
 	'summon5',	'summon allies',	function(v,o){
 		return Utils.unitRef(v)+' x 5';
 	},
+	
+	'heathensummon', 'lord over heathens',
 
 //	'researchwithoutmagic', 'researchwithoutmagic',
 	'captureslaves', 'capture slaves', Utils.unitRef,
@@ -1989,7 +1993,10 @@ var displayorder_other = Utils.cutDisplayOrder(aliases, formats,
 //	'isayazad', 'isayazad',
 //	'isadaeva', 'isadaeva',
 	'clockworklord', 'clockwork lord',
-	
+	'curseluckshield', 'fateweaving',
+	'skirmisher', 'skirmisher',
+	'carcasscollector', 'carcass collector',
+
 ]);
 var flagorder = Utils.cutDisplayOrder(aliases, formats,
 [
@@ -2004,7 +2011,6 @@ var flagorder = Utils.cutDisplayOrder(aliases, formats,
 	'holy',		'sacred',
 	'mounted',	'mounted',
 	'immobile',	'immobile',
-	'formationfighter',	'formation fighter',
 	'undisciplined',	'undisciplined',
 	'pooramphibian','poor amphibian',
 	'slashres',	'slash resistant',
@@ -2031,6 +2037,7 @@ var flagorder = Utils.cutDisplayOrder(aliases, formats,
 	'lesserhorror', 'lesser horror',
 	'greaterhorror', 'greater horror',
 	'doomhorror', 'doom horror',
+	'illusionary',	'illusion',
 
 	'trample',	'trample',
 	'trampswallow',	'swallow',
@@ -2062,6 +2069,9 @@ var flagorder = Utils.cutDisplayOrder(aliases, formats,
 	'mountainsurvival',	'mountain survival',
 	'swampsurvival',	'swamp survival',
 	'forestsurvival',	'forest survival',
+	'snowmove',			'snow move',
+	'swimming',			'swimming',
+	'stupid',			'stupid',
 	'heal',		'recuperation',
 	'blessbers', 'bless berserk',
 
@@ -2081,7 +2091,7 @@ var flagorder = Utils.cutDisplayOrder(aliases, formats,
 	'nowish', 'no wish',
 	'mason', 'mason',
 	'invisibility', 'invisible',
-	'spellsinging', 'spell singer',
+	'spellsinger', 'spell singer',
 	'magicallyattunedresearcher', 'magically attuned researcher',
 	'reanimpriest', 'reanimator priest',
 	'stunimmunity', 'stun immunity',
@@ -2097,7 +2107,7 @@ var flagorder = Utils.cutDisplayOrder(aliases, formats,
 	'flieswhenblessed', 'flies when blessed',
 	'commaster', 'communion master',
 	'comslave', 'communion slave',
-
+	'unseen', 'unseen'
 	]);
 var hiddenkeys = Utils.cutDisplayOrder(aliases, formats,
 [
